@@ -1,3 +1,5 @@
+```json
+
 usuario
 {
   _id: ObjectId,
@@ -16,39 +18,53 @@ producto
   descripcion: String,
   precio: Number,
   categoria: String,
-  tallas: [String],
   color: String,
-  stock: Number,
   imagen: String,
-  fechaCreacion: Date
-}
-
-orden
-{
-  _id: ObjectId,
-  usuario: ObjectId,
-  productos: [
+  fechaCreacion: Date,
+  tallas: [
     {
-      productoId: ObjectId,
-      nombre: String,
-      precio: Number,
-      cantidad: Number
+      talla: String,   // "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"
+      stock: Number    // stock específico de esa talla
     }
-  ],
-  total: Number,
-  estado: String,
-  fecha: Date
+  ]
 }
 
 carrito
 {
   _id: ObjectId,
-  usuario: ObjectId,
+  usuario: String,
   productos: [
     {
-      productoId: ObjectId,
+      productoId: String,
+      nombre: String,
+      precio: Number,
+      imagen: String,
+      talla: String,
       cantidad: Number
     }
   ]
 }
 
+orden
+{
+  _id: ObjectId,
+  usuario: String,
+  usuarioNombre: String,
+  usuarioEmail: String,
+  productos: [
+    {
+      productoId: String,
+      nombre: String,
+      precio: Number,
+      cantidad: Number,
+      talla: String,
+      categoria: String,
+      descripcion: String,
+      imagen: String
+    }
+  ],
+  total: Number,
+  estado: "pendiente" | "confirmado" | "cancelado",
+  fecha: Date
+}
+```
