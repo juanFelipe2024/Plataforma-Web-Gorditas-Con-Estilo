@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gorditas con Estilo</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="page-home">
+
+    <nav class="navbar">
+        <div class="navbar-brand">Gorditas con Estilo</div>
+        <div class="navbar-links">
+            <span id="nav-usuario"></span>
+            <a href="mispedidos.html" class="nav-link">Mis pedidos</a>
+            <a href="cart.html" class="nav-link nav-carrito">Carrito<span id="carrito-badge" class="carrito-badge hidden">0</span></a>
+            <a href="#" id="nav-logout" class="nav-link">Cerrar sesión</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="hero-home">
+            <p class="hero-kicker">Coleccion Nueva</p>
+            <h1>Moda con actitud, hecha para celebrar tu estilo</h1>
+            <p class="hero-copy">Descubre prendas comodas, versatiles y con cortes pensados para que te sientas increible todos los dias.</p>
+            <div class="hero-pills">
+                <span>Envios rapidos</span>
+                <span>Tallas reales</span>
+                <span>Compra segura</span>
+            </div>
+        </section>
+
+        <div class="categorias-bar">
+            <button class="categoria-btn activa" onclick="filtrarCategoria('todas', this)">Todas</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Blusas', this)">Blusas</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Pantalones', this)">Pantalones</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Conjuntos', this)">Conjuntos</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Faldas', this)">Faldas</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Shorts', this)">Shorts</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Vestidos', this)">Vestidos</button>
+        </div>
+        </div>
+
+        <div class="filtros-bar">
+            <div class="search-wrapper">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M21 21l-4.35-4.35" stroke="#7a6f65" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="11" cy="11" r="6" stroke="#7a6f65" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <input id="search-input" class="search-input" type="search" placeholder="Buscar productos, p. ej. 'blusa'" aria-label="Buscar productos">
+                <button id="search-clear" class="search-clear" aria-label="Limpiar búsqueda">×</button>
+            </div>
+            <select id="sort-select" class="sort-select" aria-label="Ordenar productos">
+                <option value="none">Ordenar</option>
+                <option value="price-asc">Precio: menor a mayor</option>
+                <option value="price-desc">Precio: mayor a menor</option>
+                <option value="name-asc">Nombre: A → Z</option>
+                <option value="name-desc">Nombre: Z → A</option>
+                <option value="stock-asc">Stock: menor a mayor</option>
+                <option value="stock-desc">Stock: mayor a menor</option>
+            </select>
+        </div>
+
+        <h2 class="section-title" id="titulo-categoria">Nuestras prendas</h2>
+        <div id="productos-grid" class="productos-grid"></div>
+    </main>
+
+    <script src="js/ui.js"></script>
+    <script src="js/products.js"></script>
+</body>
+</html>

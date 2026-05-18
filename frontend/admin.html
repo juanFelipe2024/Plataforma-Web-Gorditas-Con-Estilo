@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel Admin - Gorditas con Estilo</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body class="page-admin">
+    <nav class="navbar">
+      <div class="navbar-brand">Gorditas con Estilo — Admin</div>
+      <div class="navbar-links">
+        <span id="nav-usuario"></span>
+        <a href="#" id="nav-logout" class="nav-link">Cerrar sesión</a>
+      </div>
+    </nav>
+
+    <main class="container">
+      <section class="admin-hero">
+        <div>
+          <p class="admin-kicker">Panel de administración</p>
+          <h1>
+            Gestiona pedidos, catálogo y nuevas prendas desde un solo tablero.
+          </h1>
+          <p class="admin-copy">
+            Usa las pestañas para cambiar rápido entre tareas y evitar el
+            desplazamiento largo de la página.
+          </p>
+        </div>
+        <div class="admin-stats">
+          <div class="admin-stat-card">
+            <span>Pedidos</span>
+            <strong id="admin-total-pedidos">0</strong>
+          </div>
+          <div class="admin-stat-card">
+            <span>Productos</span>
+            <strong id="admin-total-productos">0</strong>
+          </div>
+          <div class="admin-stat-card">
+            <span>Pendientes</span>
+            <strong id="admin-pedidos-pendientes">0</strong>
+          </div>
+        </div>
+      </section>
+
+      <div
+        class="admin-tabs"
+        role="tablist"
+        aria-label="Secciones del administrador"
+      >
+        <button
+          class="admin-tab active"
+          type="button"
+          data-panel="panel-producto"
+        >
+          Agregar producto
+        </button>
+        <button class="admin-tab" type="button" data-panel="panel-pedidos">
+          Pedidos recibidos
+        </button>
+        <button class="admin-tab" type="button" data-panel="panel-productos">
+          Productos en catálogo
+        </button>
+        <button class="admin-tab" type="button" data-panel="panel-stats">
+          Estadísticas
+        </button>
+        <button class="admin-tab" type="button" data-panel="panel-usuarios">
+          Usuarios
+        </button>
+      </div>
+
+      <section id="panel-producto" class="admin-panel active" role="tabpanel">
+        <div class="panel-card">
+          <h2 class="section-title">Agregar producto</h2>
+          <div class="admin-form">
+            <div id="error-message" class="error-message hidden"></div>
+            <div id="success-message" class="success-message hidden"></div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="nombre">Nombre</label>
+                <input
+                  type="text"
+                  id="nombre"
+                  placeholder="Nombre del producto"
+                />
+              </div>
+              <div class="form-group">
+                <label for="precio">Precio</label>
+                <input
+                  type="number"
+                  id="precio"
+                  placeholder="Precio en pesos"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="descripcion">Descripción</label>
+              <input
+                type="text"
+                id="descripcion"
+                placeholder="Descripción del producto"
+              />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="categoria">Categoría</label>
+                <input
+                  type="text"
+                  id="categoria"
+                  placeholder="blusas, pantalones..."
+                />
+              </div>
+              <div class="form-group">
+                <label for="color">Color</label>
+                <input
+                  type="text"
+                  id="color"
+                  placeholder="Color de la prenda"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="tallas">Tallas</label>
+                <input type="text" id="tallas" placeholder="XL, 2XL, 3XL" />
+              </div>
+              <div class="form-group">
+                <label for="stock">Stock</label>
+                <input
+                  type="number"
+                  id="stock"
+                  placeholder="Cantidad disponible"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="imagen">Imagen (URL)</label>
+              <input type="text" id="imagen" placeholder="URL de la imagen" />
+            </div>
+
+            <button id="btn-agregar" class="btn-primary">
+              Agregar producto
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-pedidos" class="admin-panel" role="tabpanel" hidden>
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2 class="section-title">Pedidos recibidos</h2>
+            <p class="panel-help">
+              Cambia el estado del pedido sin salir de esta vista.
+            </p>
+          </div>
+          <div id="pedidos-container"></div>
+        </div>
+      </section>
+
+      <section id="panel-productos" class="admin-panel" role="tabpanel" hidden>
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h2 class="section-title">Productos en catálogo</h2>
+              <p class="panel-help">
+                Edita o elimina productos desde la lista.
+              </p>
+            </div>
+            <div class="admin-search">
+              <input
+                type="text"
+                id="admin-productos-search"
+                placeholder="Buscar por nombre, descripción o categoría"
+              />
+            </div>
+          </div>
+          <div id="productos-container"></div>
+          <div class="panel-card" style="margin-top: 18px">
+            <h3 class="section-title">Top productos</h3>
+            <p class="panel-help">Más vendidos (últimos 90 días)</p>
+            <ul
+              id="admin-top-products-list"
+              style="margin-top: 8px; padding-left: 18px; color: var(--muted)"
+            ></ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-stats" class="admin-panel" role="tabpanel" hidden>
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h2 class="section-title">Estadísticas de ventas</h2>
+              <p class="panel-help">
+                Resumen visual y tablas con las métricas clave.
+              </p>
+            </div>
+            <div class="stats-range">
+              <label for="stats-range">Rango</label>
+              <select id="stats-range" class="stats-range-select">
+                <option value="7">Últimos 7 días</option>
+                <option value="30" selected>Últimos 30 días</option>
+                <option value="90">Últimos 90 días</option>
+                <option value="180">Últimos 180 días</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stats-metric-card">
+              <span class="stats-label">Ingresos (mes)</span>
+              <strong id="stat-revenue-month" class="stats-value">$0</strong>
+              <p class="stats-caption">Pedidos confirmados este mes</p>
+              <div id="stat-orders-month" class="stats-highlight">0</div>
+            </div>
+
+            <div class="stats-metric-card">
+              <span class="stats-label">Top vendido</span>
+              <strong id="stat-top-product" class="stats-value stats-value-sm"
+                >—</strong
+              >
+              <p class="stats-caption">Unidades vendidas (últimos 90 días)</p>
+            </div>
+
+            <div class="stats-metric-card stats-export">
+              <span class="stats-label">Exportar</span>
+              <button id="btn-export-csv" class="btn-primary">
+                Descargar CSV
+              </button>
+              <p class="stats-caption">
+                Reporte listo para Excel o Google Sheets.
+              </p>
+            </div>
+          </div>
+
+          <div class="panel-card stats-charts-card">
+            <div class="stats-charts">
+              <div class="chart-card">
+                <div class="chart-header">
+                  <h3 id="stats-revenue-title">Ingresos últimos 30 días</h3>
+                  <span id="stats-revenue-subtitle"
+                    >Comparado con pedidos diarios</span
+                  >
+                </div>
+                <div class="chart-canvas">
+                  <canvas id="chart-revenue"></canvas>
+                </div>
+              </div>
+
+              <div class="chart-card">
+                <div class="chart-header">
+                  <h3 id="stats-top-title">Productos más vendidos</h3>
+                  <span id="stats-top-subtitle">Top 6 por unidades</span>
+                </div>
+                <div class="chart-canvas">
+                  <canvas id="chart-top-products"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-card stats-list-card">
+            <h3 id="stats-list-title" class="stats-list-title">
+              Top productos (90 días)
+            </h3>
+            <ul id="stats-top-products" class="stats-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-usuarios" class="admin-panel" role="tabpanel" hidden>
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2 class="section-title">Usuarios</h2>
+            <p class="panel-help">
+              Lista de clientes registrados. Puedes eliminar usuarios aquí.
+            </p>
+          </div>
+          <div id="usuarios-container"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal de edición de producto -->
+    <div id="modal-editar" class="modal-overlay hidden">
+      <div class="modal-card">
+        <h3 class="modal-titulo">Editar producto</h3>
+
+        <div id="editar-error" class="error-message hidden"></div>
+        <div id="editar-success" class="success-message hidden"></div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" id="editar-nombre" />
+          </div>
+          <div class="form-group">
+            <label>Precio</label>
+            <input type="number" id="editar-precio" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Descripción</label>
+          <input type="text" id="editar-descripcion" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Categoría</label>
+            <input type="text" id="editar-categoria" />
+          </div>
+          <div class="form-group">
+            <label>Color</label>
+            <input type="text" id="editar-color" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tallas</label>
+            <input type="text" id="editar-tallas" />
+          </div>
+          <div class="form-group">
+            <label>Stock</label>
+            <input type="number" id="editar-stock" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Imagen (URL)</label>
+          <input type="text" id="editar-imagen" />
+        </div>
+
+        <div id="editar-preview-container" style="margin-bottom: 14px">
+          <img
+            id="editar-preview"
+            src=""
+            alt="Preview"
+            style="
+              width: 100%;
+              max-height: 200px;
+              object-fit: contain;
+              border-radius: 8px;
+              background: #f8f0f5;
+              display: none;
+            "
+          />
+        </div>
+
+        <button class="btn-primary" onclick="guardarEdicion()">
+          Guardar cambios
+        </button>
+        <button class="btn-cancelar" onclick="cerrarModalEditar()">
+          Cancelar
+        </button>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/admin.js"></script>
+  </body>
+</html>

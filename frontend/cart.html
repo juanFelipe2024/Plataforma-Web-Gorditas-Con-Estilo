@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito - Gorditas con Estilo</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="page-cart">
+
+    <nav class="navbar">
+        <div class="navbar-brand">Gorditas con Estilo</div>
+        <div class="navbar-links">
+            <span id="nav-usuario"></span>
+            <a href="mispedidos.html" class="nav-link">Mis pedidos</a>
+            <a href="index.html" class="nav-link">Catálogo</a>
+            <a href="#" id="nav-logout" class="nav-link">Cerrar sesión</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h2 class="section-title">Mi carrito</h2>
+
+        <div id="carrito-container">
+            <div id="carrito-items"></div>
+
+            <div id="carrito-resumen" class="carrito-resumen hidden">
+                <p class="carrito-total">Total: <span id="carrito-total">$0</span></p>
+                <button id="btn-confirmar" class="btn-primary">Confirmar compra</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de pago -->
+    <div id="modal-pago" class="modal-overlay hidden">
+        <div class="modal-card">
+
+            <!-- Paso 1: elegir método -->
+            <div id="seccion-metodo" class="hidden">
+                <h3 class="modal-titulo">¿Cómo deseas pagar?</h3>
+                <div class="metodos-pago">
+                    <button class="metodo-btn" onclick="elegirMetodo('transferencia')">
+                        <span class="metodo-icono">🏦</span>
+                        <span>Transferencia bancaria</span>
+                    </button>
+                    <button class="metodo-btn" onclick="elegirMetodo('tarjeta')">
+                        <span class="metodo-icono">💳</span>
+                        <span>Tarjeta de crédito / débito</span>
+                    </button>
+                </div>
+                <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+            </div>
+
+            <!-- Paso 2a: transferencia -->
+            <div id="seccion-transferencia" class="hidden">
+                <h3 class="modal-titulo">Transferencia bancaria</h3>
+                <div class="info-banco">
+                    <p><strong>Banco:</strong> Bancolombia</p>
+                    <p><strong>Tipo de cuenta:</strong> Ahorros</p>
+                    <p><strong>Número:</strong> 123-456789-00</p>
+                    <p><strong>Titular:</strong> Gorditas con Estilo S.A.S</p>
+                </div>
+                <form id="form-transferencia">
+                    <div class="form-group">
+                        <label>Nombre del titular que transfiere</label>
+                        <input type="text" id="trans-nombre" placeholder="Tu nombre completo" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Número de comprobante</label>
+                        <input type="text" id="trans-comprobante" placeholder="Ej: 20240401123456" required>
+                    </div>
+                    <button type="button" class="btn-primary" onclick="
+                        if (!document.getElementById('trans-nombre').value ||
+                            !document.getElementById('trans-comprobante').value) {
+                            alert('Por favor completa todos los campos');
+                            return;
+                        }
+                        procesarPago('transferencia')">
+                        Confirmar pago
+                    </button>
+                </form>
+                <button class="btn-cancelar" onclick="mostrarSeccion('seccion-metodo')">← Volver</button>
+            </div>
+
+            <!-- Paso 2b: tarjeta -->
+            <div id="seccion-tarjeta" class="hidden">
+                <h3 class="modal-titulo">Tarjeta de crédito / débito</h3>
+                <form id="form-tarjeta">
+                    <div class="form-group">
+                        <label>Nombre en la tarjeta</label>
+                        <input type="text" id="card-nombre" placeholder="Como aparece en la tarjeta" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Número de tarjeta</label>
+                        <input type="text" id="card-numero" placeholder="1234 5678 9012 3456"
+                            maxlength="19"
+                            oninput="this.value = this.value.replace(/\D/g,'').replace(/(.{4})/g,'$1 ').trim()">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Vencimiento</label>
+                            <input type="text" id="card-vence" placeholder="MM/AA" maxlength="5"
+                                oninput="
+                                    this.value = this.value.replace(/\D/g,'');
+                                    if (this.value.length > 2) this.value = this.value.slice(0,2) + '/' + this.value.slice(2);">
+                        </div>
+                        <div class="form-group">
+                            <label>CVV</label>
+                            <input type="password" id="card-cvv" placeholder="***" maxlength="3"
+                                oninput="this.value = this.value.replace(/\D/g,'')">
+                        </div>
+                    </div>
+                    <button type="button" class="btn-primary" onclick="
+                        if (!document.getElementById('card-nombre').value ||
+                            !document.getElementById('card-numero').value ||
+                            !document.getElementById('card-vence').value ||
+                            !document.getElementById('card-cvv').value) {
+                            alert('Por favor completa todos los campos');
+                            return;
+                        }
+                        procesarPago('tarjeta')">
+                        Pagar ahora
+                    </button>
+                </form>
+                <button class="btn-cancelar" onclick="mostrarSeccion('seccion-metodo')">← Volver</button>
+            </div>
+
+            <!-- Paso 3: procesando -->
+            <div id="seccion-procesando" class="hidden seccion-centrada">
+                <div class="spinner"></div>
+                <p style="margin-top: 20px; color: #555;">Procesando tu pago...</p>
+            </div>
+
+            <!-- Paso 4: éxito -->
+            <div id="seccion-exito" class="hidden seccion-centrada">
+                <div class="exito-icono">✓</div>
+                <h3 class="modal-titulo">¡Compra confirmada!</h3>
+                <p>Total pagado: <strong id="exito-total"></strong></p>
+                <p style="font-size: 13px; color: #888; margin-top: 4px;">
+                    Método: <span id="exito-metodo"></span>
+                </p>
+                <p style="font-size: 13px; color: #888; margin-top: 8px;">
+                    Te enviamos la confirmación por WhatsApp.
+                </p>
+                <button class="btn-primary" style="margin-top: 24px;" onclick="finalizarCompra()">
+                    Volver al catálogo
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/ui.js"></script>
+    <script src="js/cart.js"></script>
+</body>
+</html>

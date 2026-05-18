@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Producto - Gorditas con Estilo</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="page-product">
+
+    <nav class="navbar">
+        <div class="navbar-brand">Gorditas con Estilo</div>
+        <div class="navbar-links">
+            <span id="nav-usuario"></span>
+            <a href="index.html" class="nav-link">Catálogo</a>
+            <a href="mispedidos.html" class="nav-link">Mis pedidos</a>
+            <a href="cart.html" class="nav-link nav-carrito">Carrito<span id="carrito-badge" class="carrito-badge hidden">0</span></a>
+            <a href="#" id="nav-logout" class="nav-link">Cerrar sesión</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <a href="index.html" class="btn-volver">← Volver al catálogo</a>
+        <div id="producto-detalle" class="producto-detalle"></div>
+    </main>
+
+    <script src="js/ui.js"></script>
+    <script src="js/product.js"></script>
+</body>
+</html>
