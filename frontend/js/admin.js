@@ -16,6 +16,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("btn-agregar")
     .addEventListener("click", agregarProducto);
+  const tallasContainer = document.getElementById("tallas-container");
+  if (tallasContainer) {
+    tallasContainer.innerHTML = crearFilaTalla();
+  }
 });
 
 function configurarPestanasAdmin() {
@@ -117,20 +121,33 @@ async function agregarProducto() {
   const descripcion = document.getElementById("descripcion").value.trim();
   const categoria = document.getElementById("categoria").value.trim();
   const color = document.getElementById("color").value.trim();
-  const tallasInput = document.getElementById("tallas").value.trim();
-  const stock = document.getElementById("stock").value.trim();
   const imagen = document.getElementById("imagen").value.trim();
 
-  if (!nombre || !precio || !stock) {
-    errorDiv.textContent = "Nombre, precio y stock son obligatorios";
+  if (!nombre || !precio) {
+    errorDiv.textContent = "Nombre y precio son obligatorios";
     errorDiv.classList.remove("hidden");
     return;
   }
 
-  const tallas = tallasInput
-    .split(",")
-    .map((t) => t.trim())
-    .filter((t) => t !== "");
+  // Recoger tallas con su stock individual
+  const filаsTallas = document.querySelectorAll(".talla-stock-fila");
+  const tallas = [];
+  let stockTotal = 0;
+
+  for (const fila of filаsTallas) {
+    const talla = fila.querySelector(".talla-nombre").value.trim();
+    const stock = parseInt(fila.querySelector(".talla-stock").value) || 0;
+    if (talla) {
+      tallas.push({ talla, stock });
+      stockTotal += stock;
+    }
+  }
+
+  if (tallas.length === 0) {
+    errorDiv.textContent = "Agrega al menos una talla con su stock";
+    errorDiv.classList.remove("hidden");
+    return;
+  }
 
   try {
     const response = await fetch(`${API_URL}/products`, {
@@ -146,7 +163,7 @@ async function agregarProducto() {
         categoria,
         color,
         tallas,
-        stock: Number(stock),
+        stock: stockTotal,
         imagen,
       }),
     });
@@ -174,9 +191,12 @@ function limpiarFormulario() {
   document.getElementById("descripcion").value = "";
   document.getElementById("categoria").value = "";
   document.getElementById("color").value = "";
-  document.getElementById("tallas").value = "";
-  document.getElementById("stock").value = "";
   document.getElementById("imagen").value = "";
+  // Resetear tallas a una fila vacía
+  const contenedor = document.getElementById("tallas-container");
+  if (contenedor) {
+    contenedor.innerHTML = crearFilaTalla();
+  }
 }
 
 async function cargarPedidos() {
@@ -732,9 +752,19 @@ async function abrirModalEditar(productoId) {
     document.getElementById("editar-categoria").value =
       producto.categoria || "";
     document.getElementById("editar-color").value = producto.color || "";
-    document.getElementById("editar-tallas").value =
-      producto.tallas?.join(", ") || "";
-    document.getElementById("editar-stock").value = producto.stock || "";
+    // Después
+    const contenedorEditar = document.getElementById("editar-tallas-container");
+    contenedorEditar.innerHTML = "";
+    if (producto.tallas && producto.tallas.length > 0) {
+      producto.tallas.forEach((t) => {
+        contenedorEditar.insertAdjacentHTML(
+          "beforeend",
+          crearFilaTalla(t.talla, t.stock, true),
+        );
+      });
+    } else {
+      contenedorEditar.innerHTML = crearFilaTalla("", 0, true);
+    }
     document.getElementById("editar-imagen").value = producto.imagen || "";
 
     // Mostrar preview de la imagen actual
@@ -777,19 +807,32 @@ async function guardarEdicion() {
 
   const nombre = document.getElementById("editar-nombre").value.trim();
   const precio = document.getElementById("editar-precio").value.trim();
-  const stock = document.getElementById("editar-stock").value.trim();
 
-  if (!nombre || !precio || !stock) {
-    errorDiv.textContent = "Nombre, precio y stock son obligatorios";
+  if (!nombre || !precio) {
+    errorDiv.textContent = "Nombre y precio son obligatorios";
     errorDiv.classList.remove("hidden");
     return;
   }
 
-  const tallasInput = document.getElementById("editar-tallas").value.trim();
-  const tallas = tallasInput
-    .split(",")
-    .map((t) => t.trim())
-    .filter((t) => t !== "");
+  // Recoger tallas con stock del modal de edición
+  const filasTallas = document.querySelectorAll(".editar-talla-stock-fila");
+  const tallas = [];
+  let stockTotal = 0;
+
+  for (const fila of filasTallas) {
+    const talla = fila.querySelector(".talla-nombre").value.trim();
+    const stock = parseInt(fila.querySelector(".talla-stock").value) || 0;
+    if (talla) {
+      tallas.push({ talla, stock });
+      stockTotal += stock;
+    }
+  }
+
+  if (tallas.length === 0) {
+    errorDiv.textContent = "Agrega al menos una talla con su stock";
+    errorDiv.classList.remove("hidden");
+    return;
+  }
 
   const body = {
     nombre,
@@ -798,7 +841,7 @@ async function guardarEdicion() {
     categoria: document.getElementById("editar-categoria").value.trim(),
     color: document.getElementById("editar-color").value.trim(),
     tallas,
-    stock: Number(stock),
+    stock: stockTotal,
     imagen: document.getElementById("editar-imagen").value.trim(),
   };
 
@@ -826,5 +869,42 @@ async function guardarEdicion() {
   } catch (error) {
     errorDiv.textContent = "Error de conexión, intenta de nuevo";
     errorDiv.classList.remove("hidden");
+  }
+}
+
+function crearFilaTalla(talla = "", stock = 0, esEdicion = false) {
+  const claseBase = esEdicion ? "editar-talla-stock-fila" : "talla-stock-fila";
+  const TALLAS = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"];
+  const opciones = TALLAS.map(
+    (t) =>
+      `<option value="${t}" ${t === talla ? "selected" : ""}>${t}</option>`,
+  ).join("");
+
+  return `
+        <div class="${claseBase}" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+            <select class="talla-nombre select-talla" style="flex:1">
+                <option value="">Talla</option>
+                ${opciones}
+            </select>
+            <input type="number" class="talla-stock" placeholder="Stock" min="0"
+                value="${stock}"
+                style="width:90px; padding:10px 8px; border:1px solid rgba(189,176,163,0.9); border-radius:10px;">
+            <button type="button" onclick="this.parentElement.remove()"
+                style="background:#ffe9e6; color:#bb2f22; border:none; border-radius:8px;
+                       padding:8px 12px; cursor:pointer; font-weight:700;">✕</button>
+        </div>
+    `;
+}
+
+function agregarFilaTalla(esEdicion = false) {
+  const contenedorId = esEdicion
+    ? "editar-tallas-container"
+    : "tallas-container";
+  const contenedor = document.getElementById(contenedorId);
+  if (contenedor) {
+    contenedor.insertAdjacentHTML(
+      "beforeend",
+      crearFilaTalla("", 0, esEdicion),
+    );
   }
 }

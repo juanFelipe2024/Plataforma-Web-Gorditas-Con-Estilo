@@ -123,19 +123,17 @@
               </div>
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label for="tallas">Tallas</label>
-                <input type="text" id="tallas" placeholder="XL, 2XL, 3XL" />
-              </div>
-              <div class="form-group">
-                <label for="stock">Stock</label>
-                <input
-                  type="number"
-                  id="stock"
-                  placeholder="Cantidad disponible"
-                />
-              </div>
+            <div class="form-group">
+              <label>Tallas y stock por talla</label>
+              <div id="tallas-container"></div>
+              <button
+                type="button"
+                onclick="agregarFilaTalla(false)"
+                class="btn-agregar"
+                style="margin-top: 8px; width: auto; padding: 8px 16px"
+              >
+                + Agregar talla
+              </button>
             </div>
 
             <div class="form-group">
@@ -321,15 +319,17 @@
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>Tallas</label>
-            <input type="text" id="editar-tallas" />
-          </div>
-          <div class="form-group">
-            <label>Stock</label>
-            <input type="number" id="editar-stock" />
-          </div>
+        <div class="form-group">
+          <label>Tallas y stock por talla</label>
+          <div id="editar-tallas-container"></div>
+          <button
+            type="button"
+            onclick="agregarFilaTalla(true)"
+            class="btn-agregar"
+            style="margin-top: 8px; width: auto; padding: 8px 16px"
+          >
+            + Agregar talla
+          </button>
         </div>
 
         <div class="form-group">
