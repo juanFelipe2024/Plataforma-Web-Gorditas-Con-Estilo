@@ -1,28 +1,55 @@
-const Cart = require("../models/Cart");
-const Product = require("../models/Product");
-const Order = require("../models/Order");
+const { getDB } = require("../config/db");
+const { ObjectId } = require("mongodb");
 const { enviarConfirmacionEmail } = require("../services/emailService");
-const User = require("../models/User");
 
-// Agregar un producto al carrito
 exports.agregarAlCarrito = async (req, res) => {
   try {
+    const db = getDB();
     const { productoId, cantidad, talla } = req.body;
     const usuarioId = req.usuario.id;
 
-    const producto = await Product.findById(productoId);
+    const producto = await db.collection("products").findOne({
+      _id: new ObjectId(productoId),
+    });
+
     if (!producto) {
       return res.status(404).json({ error: "Producto no encontrado" });
     }
 
-    let carrito = await Cart.findOne({ usuario: usuarioId });
+    // Verificar que la talla existe y tiene stock suficiente
+    const tallaInfo = producto.tallas.find((t) => t.talla === talla);
+    if (!tallaInfo) {
+      return res
+        .status(400)
+        .json({
+          error: `La talla ${talla} no está disponible para este producto`,
+        });
+    }
+    if (tallaInfo.stock < cantidad) {
+      return res
+        .status(400)
+        .json({ error: `Stock insuficiente para la talla ${talla}` });
+    }
+
+    const carrito = await db
+      .collection("carts")
+      .findOne({ usuario: usuarioId });
 
     const itemExistente = carrito?.productos.find(
       (p) => p.productoId === productoId && p.talla === talla,
     );
 
     if (itemExistente) {
-      itemExistente.cantidad += cantidad;
+      await db
+        .collection("carts")
+        .updateOne(
+          {
+            usuario: usuarioId,
+            "productos.productoId": productoId,
+            "productos.talla": talla,
+          },
+          { $inc: { "productos.$.cantidad": cantidad } },
+        );
     } else {
       const nuevoItem = {
         productoId,
@@ -32,25 +59,45 @@ exports.agregarAlCarrito = async (req, res) => {
         talla,
         cantidad,
       };
+
       if (carrito) {
-        carrito.productos.push(nuevoItem);
+        await db
+          .collection("carts")
+          .updateOne(
+            { usuario: usuarioId },
+            { $push: { productos: nuevoItem } },
+          );
       } else {
-        carrito = new Cart({ usuario: usuarioId, productos: [nuevoItem] });
+        await db.collection("carts").insertOne({
+          usuario: usuarioId,
+          productos: [nuevoItem],
+        });
       }
     }
 
-    await carrito.save();
-    res.status(200).json({ message: "Producto agregado al carrito", carrito });
+    const carritoActualizado = await db
+      .collection("carts")
+      .findOne({ usuario: usuarioId });
+    res
+      .status(200)
+      .json({
+        message: "Producto agregado al carrito",
+        carrito: carritoActualizado,
+      });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Error al agregar al carrito" });
   }
 };
 
-// Obtener el carrito del usuario
 exports.obtenerCarrito = async (req, res) => {
   try {
+    const db = getDB();
     const usuarioId = req.usuario.id;
-    const carrito = await Cart.findOne({ usuario: usuarioId });
+
+    const carrito = await db
+      .collection("carts")
+      .findOne({ usuario: usuarioId });
 
     if (!carrito) {
       return res
@@ -64,80 +111,110 @@ exports.obtenerCarrito = async (req, res) => {
   }
 };
 
-// Eliminar un producto del carrito
 exports.eliminarDelCarrito = async (req, res) => {
   try {
+    const db = getDB();
     const usuarioId = req.usuario.id;
     const { productoId } = req.params;
     const { talla } = req.query;
 
-    const carrito = await Cart.findOne({ usuario: usuarioId });
-
+    const carrito = await db
+      .collection("carts")
+      .findOne({ usuario: usuarioId });
     if (!carrito) {
-      return res.status(404).json({
-        error: "Carrito no encontrado",
-      });
+      return res.status(404).json({ error: "Carrito no encontrado" });
     }
 
-    carrito.productos = carrito.productos.filter(
-      (p) => !(p.productoId === productoId && p.talla === talla),
-    );
+    await db
+      .collection("carts")
+      .updateOne(
+        { usuario: usuarioId },
+        { $pull: { productos: { productoId, talla } } },
+      );
 
-    await carrito.save();
-
-    res.status(200).json({
-      message: "Producto eliminado del carrito",
-      carrito,
-    });
+    const carritoActualizado = await db
+      .collection("carts")
+      .findOne({ usuario: usuarioId });
+    res
+      .status(200)
+      .json({
+        message: "Producto eliminado del carrito",
+        carrito: carritoActualizado,
+      });
   } catch (error) {
-    res.status(500).json({
-      error: "Error al eliminar del carrito",
-    });
+    res.status(500).json({ error: "Error al eliminar del carrito" });
   }
 };
 
-// Confirmar la compra y se convierte en pedido
 exports.confirmarCompra = async (req, res) => {
   const stockActualizado = [];
 
   try {
+    const db = getDB();
     const usuarioId = req.usuario.id;
     const metodoPago = req.body.metodoPago || "No especificado";
 
-    const carrito = await Cart.findOne({ usuario: usuarioId }); // sin populate
+    const carrito = await db
+      .collection("carts")
+      .findOne({ usuario: usuarioId });
 
     if (!carrito || carrito.productos.length === 0) {
-      return res.status(400).json({
-        error: "El carrito está vacío",
-      });
+      return res.status(400).json({ error: "El carrito está vacío" });
     }
 
     let total = 0;
     const productosParaPedido = [];
 
     for (const item of carrito.productos) {
-      const productoActualizado = await Product.findOneAndUpdate(
-        { _id: item.productoId, stock: { $gte: item.cantidad } },
-        { $inc: { stock: -item.cantidad } },
-        { new: true },
+      // Descontar stock de la talla específica
+      const resultado = await db.collection("products").findOneAndUpdate(
+        {
+          _id: new ObjectId(item.productoId),
+          tallas: {
+            $elemMatch: {
+              talla: item.talla,
+              stock: { $gte: item.cantidad },
+            },
+          },
+        },
+        {
+          $inc: {
+            "tallas.$.stock": -item.cantidad,
+            stock: -item.cantidad,
+          },
+        },
+        { returnDocument: "after" },
       );
 
-      if (!productoActualizado) {
+      if (!resultado) {
+        // Revertir cambios de stock anteriores
         for (const ajuste of stockActualizado) {
-          await Product.findByIdAndUpdate(ajuste.productoId, {
-            $inc: { stock: ajuste.cantidad },
-          });
+          await db.collection("products").updateOne(
+            {
+              _id: new ObjectId(ajuste.productoId),
+              "tallas.talla": ajuste.talla,
+            },
+            {
+              $inc: {
+                "tallas.$.stock": ajuste.cantidad,
+                stock: ajuste.cantidad,
+              },
+            },
+          );
         }
-        stockActualizado.length = 0;
         return res
           .status(400)
-          .json({ error: `Stock insuficiente para ${item.nombre}` });
+          .json({
+            error: `Stock insuficiente para ${item.nombre} talla ${item.talla}`,
+          });
       }
 
       stockActualizado.push({
         productoId: item.productoId,
+        talla: item.talla,
         cantidad: item.cantidad,
       });
+
       total += item.precio * item.cantidad;
 
       productosParaPedido.push({
@@ -146,50 +223,66 @@ exports.confirmarCompra = async (req, res) => {
         precio: item.precio,
         cantidad: item.cantidad,
         talla: item.talla,
-        categoria: productoActualizado.categoria,
-        descripcion: productoActualizado.descripcion,
+        categoria: resultado.categoria,
+        descripcion: resultado.descripcion,
         imagen: item.imagen,
       });
     }
 
-    const usuario = await User.findById(usuarioId);
+    const usuario = await db.collection("users").findOne({
+      _id: new ObjectId(usuarioId),
+    });
 
-    const pedido = new Order({
+    const pedido = {
       usuario: usuarioId,
       usuarioNombre: usuario?.nombre || "",
       usuarioEmail: usuario?.email || "",
       productos: productosParaPedido,
       total,
-    });
+      estado: "pendiente",
+      fecha: new Date(),
+    };
 
-    await pedido.save();
+    const resultadoPedido = await db.collection("orders").insertOne(pedido);
 
-    carrito.productos = [];
-    await carrito.save();
+    // Vaciar carrito
+    await db
+      .collection("carts")
+      .updateOne({ usuario: usuarioId }, { $set: { productos: [] } });
 
-    // envío del email que faltaba
-    if (usuario && usuario.email) {
+    const pedidoGuardado = { ...pedido, _id: resultadoPedido.insertedId };
+
+    if (usuario?.email) {
       await enviarConfirmacionEmail(
         usuario.email,
         usuario.nombre,
-        pedido,
+        pedidoGuardado,
         metodoPago,
       );
     }
 
     res.status(201).json({
       message: "Compra confirmada correctamente",
-      pedido,
+      pedido: pedidoGuardado,
     });
   } catch (error) {
+    console.error(error);
     for (const ajuste of stockActualizado) {
-      await Product.findByIdAndUpdate(ajuste.productoId, {
-        $inc: { stock: ajuste.cantidad },
-      });
+      await getDB()
+        .collection("products")
+        .updateOne(
+          {
+            _id: new ObjectId(ajuste.productoId),
+            "tallas.talla": ajuste.talla,
+          },
+          {
+            $inc: {
+              "tallas.$.stock": ajuste.cantidad,
+              stock: ajuste.cantidad,
+            },
+          },
+        );
     }
-
-    res.status(500).json({
-      error: "Error al confirmar la compra",
-    });
+    res.status(500).json({ error: "Error al confirmar la compra" });
   }
 };

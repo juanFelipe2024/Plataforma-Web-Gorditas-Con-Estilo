@@ -1,16 +1,24 @@
 require("dotenv").config();
+const { MongoClient } = require("mongodb");
 
-const mongoose = require("mongoose");
+let db;
+let client;
 
 const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URI);
-
-        console.log("MongoDB conectado");
-    } catch (error) {
-        console.error("Error conectando a MongoDB:", error);
-        process.exit(1);
-    }
+  try {
+    client = new MongoClient(process.env.MONGO_URI);
+    await client.connect();
+    db = client.db(); // toma el nombre de la URI
+    console.log("MongoDB conectado (driver nativo)");
+  } catch (error) {
+    console.error("Error conectando a MongoDB:", error);
+    process.exit(1);
+  }
 };
 
-module.exports = connectDB;
+const getDB = () => {
+  if (!db) throw new Error("Base de datos no inicializada");
+  return db;
+};
+
+module.exports = { connectDB, getDB };
