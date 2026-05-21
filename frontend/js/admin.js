@@ -557,7 +557,7 @@ function renderProductosAdmin(productos, searchQuery = "") {
                     <p>Precio: $${producto.precio.toLocaleString()} — Stock: ${producto.stock}</p>
                     <p>Categoría: ${producto.categoria || "Sin categoría"}</p>
                     <p class="admin-producto-desc">${producto.descripcion || "Sin descripción"}</p>
-                    <p>Tallas: ${(producto.tallas || []).join(", ") || "Sin tallas"}</p>
+                    <p>Tallas: ${(producto.tallas || []).map((t) => `${t.talla} (${t.stock})`).join(", ") || "Sin tallas"}</p>
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button class="btn-editar-producto"
