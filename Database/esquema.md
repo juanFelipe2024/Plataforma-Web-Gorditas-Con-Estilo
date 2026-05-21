@@ -1,5 +1,4 @@
 ```json
-
 usuario
 {
   _id: ObjectId,
@@ -26,13 +25,14 @@ producto
       talla: String,   // "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"
       stock: Number    // stock específico de esa talla
     }
-  ]
+  ],
+  stock: Number        // stock total (suma de todas las tallas)
 }
 
 carrito
 {
   _id: ObjectId,
-  usuario: String,
+  usuario: String,     // id del usuario (embebido como string, no referencia)
   productos: [
     {
       productoId: String,
@@ -48,9 +48,9 @@ carrito
 orden
 {
   _id: ObjectId,
-  usuario: String,
-  usuarioNombre: String,
-  usuarioEmail: String,
+  usuario: String,          // id del usuario (embebido como string, no referencia)
+  usuarioNombre: String,    // nombre embebido al momento de la compra
+  usuarioEmail: String,     // email embebido al momento de la compra
   productos: [
     {
       productoId: String,
@@ -65,6 +65,7 @@ orden
   ],
   total: Number,
   estado: "pendiente" | "confirmado" | "cancelado",
-  fecha: Date
+  fecha: Date,
+  metodoPago: "tarjeta" | "transferencia"
 }
 ```
